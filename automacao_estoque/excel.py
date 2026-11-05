@@ -55,11 +55,30 @@ def gerar_planilha(produtos):
 
         aba[f"E{linha}"] = produto["nome"]
 
+        # Marca (opcional) - coluna H
+        aba[f"H{linha}"] = produto.get("marca", "")
+
         aba[f"I{linha}"] = produto["grade_fiscal"]
 
         aba[f"J{linha}"] = produto["ncm"]
 
         aba[f"P{linha}"] = produto["sku"]
+
+
+        # ==========================================
+        # NOVO: CÓDIGO DE BARRAS (COLUNA S)
+        # Gravado como texto para o Excel não usar
+        # notação científica nem cortar zeros
+        # ==========================================
+
+        codigo_barras = produto.get("codigo_barras", "")
+
+        if codigo_barras:
+
+            aba[f"S{linha}"] = str(codigo_barras)
+
+            aba[f"S{linha}"].number_format = "@"
+
 
         aba[f"T{linha}"] = produto["unidade"]
 
