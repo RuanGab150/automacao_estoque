@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
+import os
 from excel import gerar_planilha
 
 
@@ -786,17 +787,23 @@ def abrir_nova_entrada():
 
         try:
 
-            gerar_planilha(produtos)
+            caminho = gerar_planilha(produtos)
 
             messagebox.showinfo(
                 title="Sucesso",
                 message=(
                     f"Planilha gerada com sucesso!\n\n"
                     f"Produtos adicionados: {len(produtos)}\n\n"
-                    f"Arquivo salvo na pasta 'output'."
+                    f"Arquivo salvo em:\n{caminho}"
                 ),
                 parent=janela
             )
+
+            # Abre a pasta já com o arquivo gerado selecionado (Windows)
+            try:
+                os.startfile(os.path.dirname(caminho))
+            except Exception:
+                pass
 
             janela.destroy()
 

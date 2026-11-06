@@ -1,6 +1,7 @@
 import openpyxl
 import os
 import sys
+from datetime import datetime
 
 
 def gerar_planilha(produtos):
@@ -32,6 +33,13 @@ def gerar_planilha(produtos):
         pasta_programa,
         "Exemplo.xlsx"
     )
+
+    if not os.path.exists(arquivo_modelo):
+
+        raise FileNotFoundError(
+            f"Modelo 'Exemplo.xlsx' não encontrado em:\n{arquivo_modelo}\n\n"
+            f"Ele precisa ficar na mesma pasta do programa."
+        )
 
     planilha = openpyxl.load_workbook(
         arquivo_modelo
@@ -90,37 +98,67 @@ def gerar_planilha(produtos):
 
 
     # ==========================================
-    # CRIA A PASTA OUTPUT
+    # NOME DO ARQUIVO (com data e hora)
     # ==========================================
+    # Nome único: nunca sobrescreve a planilha anterior e
+    # não dá conflito se o pedido.xlsx antigo estiver aberto.
 
-    pasta_saida = os.path.join(
-        pasta_programa,
-        "output"
-    )
-
-    os.makedirs(
-        pasta_saida,
-        exist_ok=True
+    nome_arquivo = datetime.now().strftime(
+        "pedido_%Y-%m-%d_%H-%M-%S.xlsx"
     )
 
 
     # ==========================================
-    # NOME DO ARQUIVO
+    # PASTA OUTPUT (ao lado do programa)
     # ==========================================
+    # Se não for possível gravar ao lado do programa
+    # (pasta protegida, rede, somente leitura), usa
+    # Documentos\SistemaEstoque\output como alternativa.
 
-    arquivo_saida = os.path.join(
-        pasta_saida,
-        "pedido.xlsx"
-    )
+    candidatas = [
+        os.path.join(pasta_programa, "output"),
+        os.path.join(
+            os.path.expanduser("~"),
+            "Documents",
+            "SistemaEstoque",
+            "output"
+        ),
+    ]
 
+    arquivo_saida = None
+    ultimo_erro = None
 
-    # ==========================================
-    # SALVA A PLANILHA
-    # ==========================================
+    for pasta_saida in candidatas:
 
-    planilha.save(
-        arquivo_saida
-    )
+        try:
+
+            os.makedirs(
+                pasta_saida,
+                exist_ok=True
+            )
+
+            caminho = os.path.abspath(
+                os.path.join(pasta_saida, nome_arquivo)
+            )
+
+            planilha.save(
+                caminho
+            )
+
+            # Confirma que o arquivo realmente existe no disco
+            if os.path.exists(caminho):
+                arquivo_saida = caminho
+                break
+
+        except OSError as erro:
+
+            ultimo_erro = erro
+
+    if arquivo_saida is None:
+
+        raise OSError(
+            f"Não foi possível salvar a planilha.\n\n{ultimo_erro}"
+        )
 
 
     print("===================================")
@@ -128,3 +166,6 @@ def gerar_planilha(produtos):
     print("===================================")
     print(f"Produtos adicionados: {len(produtos)}")
     print(f"Arquivo: {arquivo_saida}")
+
+    # Devolve o caminho completo para o programa mostrar ao usuário
+    return arquivo_saida
